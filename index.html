@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STREET HOOPS '96</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #10131b;
+  color: white;
+  font-family: "Courier New", monospace;
+  text-align: center;
+}
+
+header {
+  padding: 20px 10px;
+  background: #191f2c;
+  border-bottom: 4px solid #e69b36;
+}
+
+h1 {
+  margin: 0;
+  color: #ffb743;
+  font-size: clamp(25px, 5vw, 42px);
+  text-shadow: 3px 3px #9b431c;
+}
+
+.subtitle {
+  color: #c5cad5;
+  margin-top: 7px;
+}
+
+.game-container {
+  width: min(100%, 1050px);
+  margin: 20px auto;
+  padding: 12px;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #252c3b;
+  border: 3px solid #e69b36;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.team-score {
+  font-size: 25px;
+  font-weight: bold;
+}
+
+.blue {
+  color: #54baff;
+}
+
+.red {
+  color: #ff6868;
+}
+
+#clock {
+  color: #ffcf73;
+  font-size: 24px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  background: #bd8750;
+  border: 4px solid #e69b36;
+  image-rendering: pixelated;
+}
+
+.controls {
+  margin: 15px auto;
+  line-height: 1.9;
+  color: #d5d9e2;
+  font-size: 13px;
+}
+
+button {
+  background: #e69b36;
+  border: 0;
+  padding: 12px 18px;
+  margin: 5px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button:hover {
+  background: #ffc568;
+}
+
+#message {
+  color: #ffcf73;
+  font-size: 20px;
+  font-weight: bold;
+  min-height: 28px;
+  margin: 10px;
+}
+
+footer {
+  padding: 15px;
+  color: #858d9e;
+  font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>STREET HOOPS '96</h1>
+  <div class="subtitle">THE STREETS ARE YOURS. TAKE THE COURT!</div>
+</header>
+
+<div class="game-container">
+
+  <div class="scoreboard">
+    <div class="team-score blue">
+      BLUE TEAM<br>
+      <span id="blueScore">0</span>
+    </div>
+
+    <div>
+      <div id="clock">03:00</div>
+      <div style="font-size:11px">GAME TIME</div>
+    </div>
+
+    <div class="team-score red">
+      RED TEAM<br>
+      <span id="redScore">0</span>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas" width="960" height="600"></canvas>
+
+  <div id="message">CHOOSE YOUR GAME MODE!</div>
+
+  <div>
+    <button onclick="startGame('21')">PLAY TO 21</button>
+    <button onclick="startGame('timed')">3-MINUTE MATCH</button>
+    <button onclick="resetGame()">RESTART</button>
+  </div>
+
+  <div class="controls">
+    <strong>CONTROLS</strong><br>
+    WASD / ARROW KEYS = Move<br>
+    SPACE = Shoot<br>
+    Q = Pass<br>
+    E = Steal<br>
+    SHIFT = Sprint
+  </div>
+
+</div>
+
+<footer>
+  STREET HOOPS '96 — RETRO ARCADE BASKETBALL
+</footer>
+
+<script src="game.js"></script>
+</body>
+</html>
