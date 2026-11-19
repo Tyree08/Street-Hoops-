@@ -83,6 +83,7 @@ function startGame(mode) {
   gameMode = mode;
   resetGame();
   gameRunning = true;
+
   document.getElementById("message").textContent =
     mode === "21" ? "FIRST TEAM TO 21 WINS!" : "3-MINUTE MATCH!";
 }
@@ -94,7 +95,9 @@ function resetGame() {
   gameOver = false;
   shot = null;
   cpuCooldown = 1;
+
   createTeams();
+
   gameRunning = false;
   updateScoreboard();
 
@@ -160,6 +163,7 @@ function moveUser(dt) {
 
   if (length > 0) {
     const sprint = keys["shift"] ? 1.5 : 1;
+
     player.x += (dx / length) * player.speed * sprint * dt;
     player.y += (dy / length) * player.speed * sprint * dt;
   }
@@ -171,25 +175,33 @@ function moveUser(dt) {
 function moveTeammates(dt) {
   const carrier = ball.owner;
 
-  blueTeam.slice(1).forEach((player, i) => {
+  blueTeam.slice(1).forEach(player => {
     let targetX = player.homeX;
     let targetY = player.homeY;
 
     if (carrier && carrier.team === "blue") {
       targetX = clamp(carrier.x + 60, 100, 850);
-      targetY = clamp(player.homeY + (carrier.y - 300) * 0.15, 80, 520);
+      targetY = clamp(
+        player.homeY + (carrier.y - 300) * 0.15,
+        80,
+        520
+      );
     }
 
     moveToward(player, targetX, targetY, 100, dt);
   });
 
-  redTeam.slice(1).forEach((player, i) => {
+  redTeam.slice(1).forEach(player => {
     let targetX = player.homeX;
     let targetY = player.homeY;
 
     if (carrier && carrier.team === "red") {
       targetX = clamp(carrier.x - 60, 100, 850);
-      targetY = clamp(player.homeY + (carrier.y - 300) * 0.15, 80, 520);
+      targetY = clamp(
+        player.homeY + (carrier.y - 300) * 0.15,
+        80,
+        520
+      );
     }
 
     moveToward(player, targetX, targetY, 95, dt);
@@ -220,7 +232,13 @@ function moveCPU(dt) {
     const defender = getNearestPlayer(redTeam, carrier, null);
 
     if (defender) {
-      moveToward(defender, carrier.x - 15, carrier.y, 115, dt);
+      moveToward(
+        defender,
+        carrier.x - 15,
+        carrier.y,
+        115,
+        dt
+      );
     }
   }
 }
@@ -229,11 +247,17 @@ function passBall() {
   if (!gameRunning || gameOver || shot) return;
   if (!ball.owner || ball.owner.team !== "blue") return;
 
-  const teammate = getNearestPlayer(blueTeam, ball.owner, null);
+  const teammate = getNearestPlayer(
+    blueTeam,
+    ball.owner,
+    null
+  );
 
   if (teammate) {
     ball.owner = teammate;
-    document.getElementById("message").textContent = "NICE PASS!";
+
+    document.getElementById("message").textContent =
+      "NICE PASS!";
   }
 }
 
@@ -245,13 +269,17 @@ function stealBall() {
   if (ball.owner && ball.owner.team === "red") {
     if (distance(user, ball.owner) < 55) {
       ball.owner = user;
-      document.getElementById("message").textContent = "STEAL!";
+
+      document.getElementById("message").textContent =
+        "STEAL!";
     }
   }
 }
 
 function shootBall(player) {
-  if (!player || !ball.owner || ball.owner !== player || shot) return;
+  if (!player || !ball.owner || ball.owner !== player || shot) {
+    return;
+  }
 
   const targetX = player.team === "blue" ? 900 : 60;
   const targetY = 300;
@@ -295,9 +323,12 @@ function updateShot(dt) {
       else redScore += 2;
 
       document.getElementById("message").textContent =
-        shot.team === "blue" ? "BLUE TEAM SCORES!" : "RED TEAM SCORES!";
+        shot.team === "blue"
+          ? "BLUE TEAM SCORES!"
+          : "RED TEAM SCORES!";
     } else {
-      document.getElementById("message").textContent = "MISSED SHOT!";
+      document.getElementById("message").textContent =
+        "MISSED SHOT!";
     }
 
     updateScoreboard();
@@ -315,16 +346,14 @@ function updateShot(dt) {
       return;
     }
 
-    const nextTeam = oldTeam === "blue" ? redTeam : blueTeam;
-    ball.owner = nextTeam[0];
-
     if (oldTeam === "blue") {
       ball.owner = redTeam[0];
+      ball.owner.x = 690;
     } else {
       ball.owner = blueTeam[0];
+      ball.owner.x = 270;
     }
 
-    ball.owner.x = oldTeam === "blue" ? 690 : 270;
     ball.owner.y = 300;
   }
 }
@@ -332,6 +361,7 @@ function updateShot(dt) {
 function endGame(message) {
   gameOver = true;
   gameRunning = false;
+
   document.getElementById("message").textContent = message;
 }
 
@@ -346,7 +376,6 @@ function updateClock(dt) {
     if (blueScore > redScore) endGame("BLUE TEAM WINS!");
     else if (redScore > blueScore) endGame("RED TEAM WINS!");
     else endGame("IT'S A TIE!");
-
   }
 
   const minutes = Math.floor(timeLeft / 60);
@@ -357,42 +386,172 @@ function updateClock(dt) {
     String(seconds).padStart(2, "0");
 }
 
-function update(dt) {
-  if (!gameRunning || gameOver) return;
+// ===================================
+// BASKETBALL PLAYER DRAWING
+// ===================================
 
-  cpuCooldown -= dt;
+function drawPlayer(player) {
+  const blue = player.team === "blue";
 
-  moveUser(dt);
-  moveTeammates(dt);
-  moveCPU(dt);
-  updateShot(dt);
-  updateClock(dt);
-  updateBall();
+  const jersey = blue ? "#238bd3" : "#d83c45";
+  const skin = "#d99a70";
+  const outline = "#25202a";
+  const x = player.x;
+  const y = player.y;
 
-  // Pick up a loose basketball.
-  if (!ball.owner && !shot) {
-    const allPlayers = [...blueTeam, ...redTeam];
-    const nearest = allPlayers.reduce((best, player) =>
-      distance(player, ball) < distance(best, ball) ? player : best
-    );
+  ctx.save();
 
-    if (distance(nearest, ball) < 28) {
-      ball.owner = nearest;
-    }
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // Player shadow
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+
+  ctx.beginPath();
+  ctx.ellipse(x, y + 13, 19, 11, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Legs
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 9;
+
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y + 9);
+  ctx.lineTo(x - 7, y + 20);
+
+  ctx.moveTo(x + 5, y + 9);
+  ctx.lineTo(x + 7, y + 20);
+  ctx.stroke();
+
+  // Socks
+  ctx.strokeStyle = "#eeeeee";
+  ctx.lineWidth = 5;
+
+  ctx.beginPath();
+  ctx.moveTo(x - 7, y + 16);
+  ctx.lineTo(x - 7, y + 21);
+
+  ctx.moveTo(x + 7, y + 16);
+  ctx.lineTo(x + 7, y + 21);
+  ctx.stroke();
+
+  // Basketball shoes
+  ctx.fillStyle = "#f4f0df";
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  ctx.roundRect(x - 15, y + 18, 12, 8, 3);
+  ctx.roundRect(x + 3, y + 18, 12, 8, 3);
+  ctx.fill();
+  ctx.stroke();
+
+  // Arms
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 9;
+
+  ctx.beginPath();
+  ctx.moveTo(x - 9, y - 5);
+  ctx.lineTo(x - 17, y + 5);
+
+  ctx.moveTo(x + 9, y - 5);
+  ctx.lineTo(x + 17, y + 5);
+  ctx.stroke();
+
+  // Skin on arms
+  ctx.strokeStyle = skin;
+  ctx.lineWidth = 6;
+
+  ctx.beginPath();
+  ctx.moveTo(x - 10, y - 4);
+  ctx.lineTo(x - 17, y + 5);
+
+  ctx.moveTo(x + 10, y - 4);
+  ctx.lineTo(x + 17, y + 5);
+  ctx.stroke();
+
+  // Jersey outline
+  ctx.fillStyle = outline;
+
+  ctx.beginPath();
+  ctx.roundRect(x - 12, y - 12, 24, 27, 5);
+  ctx.fill();
+
+  // Jersey
+  ctx.fillStyle = jersey;
+
+  ctx.beginPath();
+  ctx.roundRect(x - 10, y - 11, 20, 23, 4);
+  ctx.fill();
+
+  // Jersey shoulder details
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(x - 10, y - 8, 3, 5);
+  ctx.fillRect(x + 7, y - 8, 3, 5);
+
+  // Jersey number
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 11px Courier New";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(player.number, x, y + 1);
+
+  // Head outline
+  ctx.fillStyle = outline;
+
+  ctx.beginPath();
+  ctx.arc(x, y - 19, 9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Face
+  ctx.fillStyle = skin;
+
+  ctx.beginPath();
+  ctx.arc(x, y - 19, 7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle = "#30221c";
+
+  ctx.beginPath();
+  ctx.arc(x, y - 23, 7, Math.PI, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = "#242020";
+  ctx.fillRect(x - 3, y - 19, 2, 2);
+  ctx.fillRect(x + 2, y - 19, 2, 2);
+
+  // Yellow outline around controlled player
+  if (player === blueTeam[0]) {
+    ctx.strokeStyle = "#fff36b";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.ellipse(x, y + 2, 23, 29, 0, 0, Math.PI * 2);
+    ctx.stroke();
   }
+
+  ctx.restore();
 }
+
+// ===================================
+// BASKETBALL COURT
+// ===================================
 
 function drawCourt() {
   ctx.fillStyle = "#bd8750";
   ctx.fillRect(0, 0, W, H);
 
   ctx.fillStyle = "#c99158";
+
   for (let x = 0; x < W; x += 80) {
     ctx.fillRect(x, 0, 40, H);
   }
 
   ctx.strokeStyle = "#fff0ce";
   ctx.lineWidth = 5;
+
   ctx.strokeRect(30, 30, 900, 540);
 
   ctx.beginPath();
@@ -404,21 +563,21 @@ function drawCourt() {
   ctx.arc(480, 300, 75, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Left key and hoop.
+  // Left key
   ctx.strokeRect(30, 190, 150, 220);
 
   ctx.beginPath();
   ctx.arc(180, 300, 105, -Math.PI / 2, Math.PI / 2);
   ctx.stroke();
 
-  // Right key and hoop.
+  // Right key
   ctx.strokeRect(780, 190, 150, 220);
 
   ctx.beginPath();
   ctx.arc(780, 300, 105, Math.PI / 2, -Math.PI / 2);
   ctx.stroke();
 
-  // Three-point lines.
+  // Three-point lines
   ctx.beginPath();
   ctx.arc(60, 300, 245, -Math.PI / 2, Math.PI / 2);
   ctx.stroke();
@@ -427,13 +586,13 @@ function drawCourt() {
   ctx.arc(900, 300, 245, Math.PI / 2, -Math.PI / 2);
   ctx.stroke();
 
-  // Hoops.
   drawHoop(60, 300);
   drawHoop(900, 300);
 
   ctx.fillStyle = "rgba(0,0,0,0.16)";
   ctx.font = "bold 25px Courier New";
   ctx.fillText("STREET HOOPS", 355, 80);
+
   ctx.font = "bold 14px Courier New";
   ctx.fillText("'96", 460, 103);
 }
@@ -455,62 +614,59 @@ function drawHoop(x, y) {
   ctx.stroke();
 }
 
-function drawPlayer(player) {
-  const color = player.team === "blue" ? "#238bd3" : "#d83c45";
-
-  // Player shadow.
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
-  ctx.beginPath();
-  ctx.ellipse(player.x, player.y + 8, 17, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Player body.
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Jersey number.
-  ctx.fillStyle = "white";
-  ctx.font = "bold 12px Courier New";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(player.number, player.x, player.y);
-
-  // Highlight controlled player.
-  if (player === blueTeam[0]) {
-    ctx.strokeStyle = "#fff36b";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, 23, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  ctx.textAlign = "left";
-  ctx.textBaseline = "alphabetic";
-}
-
 function drawBall() {
   const x = shot ? shot.x : ball.x;
   const y = shot ? shot.y : ball.y;
 
   ctx.fillStyle = "#e77a25";
+
   ctx.beginPath();
   ctx.arc(x, y, ball.radius, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.strokeStyle = "#512b15";
   ctx.lineWidth = 2;
+
   ctx.beginPath();
   ctx.moveTo(x - 8, y);
   ctx.lineTo(x + 8, y);
+
   ctx.moveTo(x, y - 8);
   ctx.lineTo(x, y + 8);
   ctx.stroke();
+}
+
+// ===================================
+// GAME UPDATE AND DRAW
+// ===================================
+
+function update(dt) {
+  if (!gameRunning || gameOver) return;
+
+  cpuCooldown -= dt;
+
+  moveUser(dt);
+  moveTeammates(dt);
+  moveCPU(dt);
+
+  updateShot(dt);
+  updateClock(dt);
+  updateBall();
+
+  // Pick up loose basketball
+  if (!ball.owner && !shot) {
+    const allPlayers = [...blueTeam, ...redTeam];
+
+    const nearest = allPlayers.reduce((best, player) =>
+      distance(player, ball) < distance(best, ball)
+        ? player
+        : best
+    );
+
+    if (distance(nearest, ball) < 28) {
+      ball.owner = nearest;
+    }
+  }
 }
 
 function draw() {
@@ -524,6 +680,7 @@ function draw() {
 
 function gameLoop(timestamp) {
   const dt = Math.min((timestamp - lastTime) / 1000 || 0, 0.04);
+
   lastTime = timestamp;
 
   update(dt);
@@ -532,16 +689,27 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
 }
 
+// ===================================
+// KEYBOARD CONTROLS
+// ===================================
+
 document.addEventListener("keydown", event => {
   const key = event.key.toLowerCase();
+
   keys[key] = true;
 
-  if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
+  if (
+    [" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)
+  ) {
     event.preventDefault();
   }
 
   if (key === " " && gameRunning && !gameOver) {
-    shootBall(ball.owner === blueTeam[0] ? blueTeam[0] : null);
+    shootBall(
+      ball.owner === blueTeam[0]
+        ? blueTeam[0]
+        : null
+    );
   }
 
   if (key === "q") passBall();
@@ -552,6 +720,7 @@ document.addEventListener("keyup", event => {
   keys[event.key.toLowerCase()] = false;
 });
 
+// Start game
 createTeams();
 draw();
 requestAnimationFrame(gameLoop);
